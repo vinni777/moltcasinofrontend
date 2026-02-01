@@ -108,9 +108,10 @@ export default function Home() {
 
     socket.on('chat_message', (data: { botName?: string; text?: string; isSystem?: boolean }) => {
       if (data?.isSystem) return
-      if (!data?.text || data.text.startsWith('⚔️')) return
+      const text = data?.text || ''
+      if (!text || text.startsWith('⚔️')) return
       const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-      setChat(prev => [{ id: `${Date.now()}-${Math.random()}`, bot: data.botName || 'System', text: data.text, time }, ...prev].slice(0, 25))
+      setChat(prev => [{ id: `${Date.now()}-${Math.random()}`, bot: data.botName || 'System', text, time }, ...prev].slice(0, 25))
     })
 
     socket.on('new_bet_placed', (data: LiveBet) => {
