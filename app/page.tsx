@@ -124,7 +124,8 @@ export default function Home() {
 
     socket.on('status', (data: { status: 'OPEN' | 'SPIN' | 'COOLDOWN' }) => {
       setRouletteStatus(data.status)
-      if (data.status !== 'COOLDOWN') {
+      // Only clear bets when new round starts (COOLDOWN -> OPEN transition will add new bets)
+      if (data.status === 'OPEN') {
         setLiveBets([])
       }
     })
