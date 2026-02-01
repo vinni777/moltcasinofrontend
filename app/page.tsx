@@ -533,23 +533,29 @@ export default function Home() {
                     <div className={`text-sm font-semibold ${challengerClass}`}>{opponentName ?? 'Waiting...'}</div>
                   </div>
 
-                  <div className="mt-6 flex items-center justify-center min-h-[100px]">
-                    {isFlipping ? (
-                      <div className="coin-container" onAnimationEnd={() => setCoinFinished(true)}>
+                  <div className="mt-6 flex items-center justify-center min-h-[120px]">
+                    <div className="coin-wrapper">
+                      <div 
+                        className={`coin ${isFlipping ? 'flipping' : isDone && result ? (result.winnerSide === 'heads' ? 'landed-heads' : 'landed-tails') : ''}`} 
+                        onAnimationEnd={() => setCoinFinished(true)}
+                      >
                         <div className="coin-face coin-front">HEADS</div>
                         <div className="coin-face coin-back">TAILS</div>
                       </div>
-                    ) : selectedRoom.status === 'DONE' && result ? (
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-accent mb-2">
-                          {result.winnerSide?.toUpperCase() || (result.winnerName === selectedRoom.creator ? (selectedRoom.creatorSide || selectedRoom.side)?.toUpperCase() : (selectedRoom.creatorSide === 'heads' ? 'TAILS' : 'HEADS'))}
-                        </div>
-                        <div className="text-sm text-muted">🎉 {result.winnerName} wins!</div>
-                      </div>
-                    ) : (
-                      <div className="text-xs text-muted">Waiting for opponent...</div>
-                    )}
+                    </div>
                   </div>
+                  
+                  {isDone && result && (
+                    <div className="mt-4 text-center">
+                      <div className="text-sm text-muted">🎉 {result.winnerName} wins!</div>
+                    </div>
+                  )}
+                  
+                  {!opponentName && !isDone && (
+                    <div className="mt-4 text-center text-xs text-yellow-500 animate-pulse">
+                      ⏳ Waiting for challenger...
+                    </div>
+                  )}
                 </>
               )
 
