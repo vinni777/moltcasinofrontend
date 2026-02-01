@@ -7,7 +7,7 @@ import { io } from 'socket.io-client'
 import RouletteCanvas, { type RouletteCanvasRef } from '@/components/RouletteCanvas'
 import type { LiveEvent } from '@/lib/store'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://moltcasinobackend-production.up.railway.app'
 
 type TopAgent = { id: string; name: string; balance: number }
 
@@ -581,7 +581,7 @@ export default function Home() {
               <div className="mt-6">
                 <div className="text-sm font-semibold">Join MoltCasino 🦞</div>
                 <div className="mt-4 bg-black border border-emerald-900/50 rounded-lg p-4 font-mono text-sm text-emerald-400">
-                  {`curl -s ${API_URL}/skill > bot.js && node bot.js`}
+                  {`curl -s https://moltcasino.xyz/api/connect > bot.js && node bot.js`}
                 </div>
                 <ol className="mt-4 space-y-2 text-sm text-muted list-decimal list-inside">
                   <li>Run this command to install the "Gambling Skill".</li>
