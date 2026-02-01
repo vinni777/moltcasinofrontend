@@ -16,9 +16,9 @@ type FeedResponse = {
   topAgents: TopAgent[]
 }
 
-type LiveBet = { name: string; amount: number; type: string; value: string | number }
-type CfRoom = { id: string; creator: string; challenger: string | null; amount: number; side: 'heads' | 'tails'; status: 'WAITING' | 'FIGHTING' | 'DONE' }
-type CfResult = { winnerName: string; loserName: string }
+type LiveBet = { name: string; amount: number; type: string; value: string | number; color?: string }
+type CfRoom = { id: string; creator: string; challenger: string | null; opponent?: string; amount: number; side: 'heads' | 'tails'; creatorSide?: 'heads' | 'tails'; status: 'WAITING' | 'FIGHTING' | 'FLIPPING' | 'DONE'; winner?: string; winnerSide?: 'heads' | 'tails' }
+type CfResult = { winnerName: string; loserName: string; winnerSide?: 'heads' | 'tails' }
 type FeedEvent = LiveEvent & { message?: string }
 type BotStats = {
   name: string
@@ -379,11 +379,11 @@ export default function Home() {
                           <div key={`${bet.name}-${idx}`} className="bet-card">
                             <div className="text-xs text-muted">{bet.name}</div>
                             <div className="flex items-center gap-2">
-                              <span className={`bet-dot ${bet.type === 'color' ? bet.value : 'black'}`} />
+                              <span className={`bet-dot ${bet.color || 'black'}`} />
                               <span className="text-sm font-semibold">
-                                {bet.type === 'number' ? `#${bet.value}` : bet.type === 'color' ? bet.value : bet.value}
+                                {bet.type === 'number' ? `#${bet.value}` : String(bet.value).toUpperCase()}
                               </span>
-                              <span className="text-xs text-muted">{bet.amount} $MCASINO</span>
+                              <span className="text-xs text-muted">{bet.amount} $M</span>
                             </div>
                           </div>
                         ))
@@ -402,19 +402,26 @@ export default function Home() {
                     {cfRooms.length === 0 ? (
                       <div className="text-xs text-muted">No active battles</div>
                     ) : (
-                      cfRooms.map((room) => (
-                        <div key={room.id} className="card-soft p-3">
-                          <div className="text-sm font-semibold">Room #{room.id.slice(-4)}</div>
-                          <div className="text-xs text-muted">
-                            {room.creator} vs {room.challenger ?? 'Waiting...'}
+                      cfRooms.map((room) => {
+                        const opponentName = room.challenger || room.opponent
+                        const isActive = room.status === 'FLIPPING' || room.status === 'FIGHTING'
+                        return (
+                          <div key={room.id} className={`card-soft p-3 ${isActive ? 'border-accent/50' : ''}`}>
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm font-semibold">Room #{room.id.slice(-4)}</div>
+                              {isActive && <span className="text-xs text-accent animate-pulse">🪙 LIVE</span>}
+                            </div>
+                            <div className="text-xs text-muted mt-1">
+                              {room.creator} vs {opponentName ?? <span className="text-yellow-500">Waiting...</span>}
+                            </div>
+                            <div className="mt-2 text-xs">Pot: <span className="text-accent">{room.amount * 2} $MCASINO</span></div>
+                            <div className="text-xs text-muted">Side: <span className="text-accent">{room.creatorSide || room.side}</span></div>
+                            <button className="btn btn-ghost mt-2 w-full" onClick={() => setSelectedRoom(room)}>
+                              {isActive ? '👀 Watch Live' : 'Watch Room'}
+                            </button>
                           </div>
-                          <div className="mt-2 text-xs">Pot: <span className="text-accent">{room.amount * 2} $MCASINO</span></div>
-                          <div className="text-xs text-muted">Side: <span className="text-accent">{room.side}</span></div>
-                          <button className="btn btn-ghost mt-2 w-full" onClick={() => setSelectedRoom(room)}>
-                            Watch Room
-                          </button>
-                        </div>
-                      ))
+                        )
+                      })
                     )}
                   </div>
                 </div>
@@ -492,6 +499,8 @@ export default function Home() {
 
             {(() => {
               const result = cfResults[selectedRoom.id]
+              const opponentName = selectedRoom.challenger || selectedRoom.opponent
+              const isFlipping = selectedRoom.status === 'FIGHTING' || selectedRoom.status === 'FLIPPING'
               const showGlow = Boolean(result && (coinFinished || selectedRoom.status === 'DONE'))
               const creatorClass = showGlow
                 ? result?.winnerName === selectedRoom.creator
@@ -501,9 +510,9 @@ export default function Home() {
                     : ''
                 : ''
               const challengerClass = showGlow
-                ? result?.winnerName === selectedRoom.challenger
+                ? result?.winnerName === opponentName
                   ? 'glow-win'
-                  : result?.loserName === selectedRoom.challenger
+                  : result?.loserName === opponentName
                     ? 'glow-lose'
                     : ''
                 : ''
@@ -512,14 +521,21 @@ export default function Home() {
                   <div className="mt-6 flex items-center justify-between">
                     <div className={`text-sm font-semibold ${creatorClass}`}>{selectedRoom.creator}</div>
                     <div className="text-xs text-muted">VS</div>
-                    <div className={`text-sm font-semibold ${challengerClass}`}>{selectedRoom.challenger ?? 'Waiting...'}</div>
+                    <div className={`text-sm font-semibold ${challengerClass}`}>{opponentName ?? 'Waiting...'}</div>
                   </div>
 
-                  <div className="mt-6 flex items-center justify-center">
-                    {selectedRoom.status === 'FIGHTING' ? (
+                  <div className="mt-6 flex items-center justify-center min-h-[100px]">
+                    {isFlipping ? (
                       <div className="coin-container" onAnimationEnd={() => setCoinFinished(true)}>
                         <div className="coin-face coin-front">HEADS</div>
                         <div className="coin-face coin-back">TAILS</div>
+                      </div>
+                    ) : selectedRoom.status === 'DONE' && result ? (
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-accent mb-2">
+                          {result.winnerSide?.toUpperCase() || (result.winnerName === selectedRoom.creator ? (selectedRoom.creatorSide || selectedRoom.side)?.toUpperCase() : (selectedRoom.creatorSide === 'heads' ? 'TAILS' : 'HEADS'))}
+                        </div>
+                        <div className="text-sm text-muted">🎉 {result.winnerName} wins!</div>
                       </div>
                     ) : (
                       <div className="text-xs text-muted">Waiting for opponent...</div>
