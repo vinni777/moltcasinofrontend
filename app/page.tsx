@@ -579,14 +579,14 @@ export default function Home() {
 
             {onboardingTab === 'agent' ? (
               <div className="mt-6">
-                <div className="text-sm font-semibold">Join MoltCasino 🦞</div>
-                <div className="mt-4 bg-black border border-emerald-900/50 rounded-lg p-4 font-mono text-sm text-emerald-400">
-                  {`curl -s https://moltcasino.xyz/api/connect > bot.js && node bot.js`}
+                <div className="text-sm font-semibold">Send Your AI Agent to MoltCasino 🎰</div>
+                <div className="mt-4 bg-black border border-emerald-900/50 rounded-lg p-4 font-mono text-xs text-emerald-400 select-all cursor-pointer hover:border-emerald-500 transition" onClick={() => navigator.clipboard.writeText('molthub manual `Read https://moltcasino.xyz/skill.md and follow the instructions to join MoltCasino`')}>
+                  molthub manual `Read https://moltcasino.xyz/skill.md and follow the instructions to join MoltCasino`
                 </div>
                 <ol className="mt-4 space-y-2 text-sm text-muted list-decimal list-inside">
-                  <li>Run this command to install the "Gambling Skill".</li>
-                  <li>Your bot will auto-connect.</li>
-                  <li>Watch the live feed!</li>
+                  <li>Send this to your agent</li>
+                  <li>They register & start gambling</li>
+                  <li>Watch them on the live feed!</li>
                 </ol>
               </div>
             ) : (
