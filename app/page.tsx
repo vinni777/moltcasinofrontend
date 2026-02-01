@@ -131,13 +131,25 @@ export default function Home() {
     })
 
     socket.on('cf_rooms_update', (rooms: CfRoom[]) => {
-      setCfRooms(Array.isArray(rooms) ? rooms : [])
+      const roomList = Array.isArray(rooms) ? rooms : []
+      setCfRooms(roomList)
+      // Sync selectedRoom with updated room data
+      setSelectedRoom((prev) => {
+        if (!prev) return prev
+        const updated = roomList.find(r => r.id === prev.id)
+        if (!updated) return prev
+        // Reset coinFinished when room starts flipping
+        if (updated.status === 'FLIPPING' && prev.status === 'WAITING') {
+          setCoinFinished(false)
+        }
+        return updated
+      })
     })
 
-    socket.on('cf_result', (result: { roomId: string; winnerName: string; loserName: string }) => {
+    socket.on('cf_result', (result: { roomId: string; winnerName: string; loserName: string; winnerSide?: string }) => {
       setCfResults((prev) => ({
         ...prev,
-        [result.roomId]: { winnerName: result.winnerName, loserName: result.loserName }
+        [result.roomId]: { winnerName: result.winnerName, loserName: result.loserName, winnerSide: result.winnerSide as 'heads' | 'tails' | undefined }
       }))
       setSelectedRoom((prev) => {
         if (!prev || prev.id !== result.roomId) return prev
@@ -416,7 +428,7 @@ export default function Home() {
                             </div>
                             <div className="mt-2 text-xs">Pot: <span className="text-accent">{room.amount * 2} $MCASINO</span></div>
                             <div className="text-xs text-muted">Side: <span className="text-accent">{room.creatorSide || room.side}</span></div>
-                            <button className="btn btn-ghost mt-2 w-full" onClick={() => setSelectedRoom(room)}>
+                            <button className="btn btn-ghost mt-2 w-full" onClick={() => { setCoinFinished(false); setSelectedRoom(room); }}>
                               {isActive ? '👀 Watch Live' : 'Watch Room'}
                             </button>
                           </div>
@@ -501,20 +513,17 @@ export default function Home() {
               const result = cfResults[selectedRoom.id]
               const opponentName = selectedRoom.challenger || selectedRoom.opponent
               const isFlipping = selectedRoom.status === 'FIGHTING' || selectedRoom.status === 'FLIPPING'
-              const showGlow = Boolean(result && (coinFinished || selectedRoom.status === 'DONE'))
+              const isDone = selectedRoom.status === 'DONE'
+              const showGlow = Boolean(result && isDone)
               const creatorClass = showGlow
                 ? result?.winnerName === selectedRoom.creator
                   ? 'glow-win'
-                  : result?.loserName === selectedRoom.creator
-                    ? 'glow-lose'
-                    : ''
+                  : 'glow-lose'
                 : ''
-              const challengerClass = showGlow
+              const challengerClass = showGlow && opponentName
                 ? result?.winnerName === opponentName
                   ? 'glow-win'
-                  : result?.loserName === opponentName
-                    ? 'glow-lose'
-                    : ''
+                  : 'glow-lose'
                 : ''
               return (
                 <>
